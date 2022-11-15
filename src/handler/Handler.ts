@@ -1,11 +1,12 @@
-import { Bot } from "../bot/Bot";
-import { MessageContext} from "vk-io";
-import { User } from "../entity/User";
-import { RegisterKeyboard } from "../keyboard/RegisterKeyboard";
+import {Bot} from "../bot/Bot";
+import {MessageContext} from "vk-io";
+import {User} from "../entity/User";
+import {RegisterKeyboard} from "../keyboard/RegisterKeyboard";
 import {RegisterValidator} from "../validator/RegisterValidator";
-import {organType, statusType, userObject} from "../type/Types";
+import {organType, statusType} from "../type/Types";
 import {Parser} from "../pasrser/Parser";
 import {Answer} from "vk-io-question";
+import {SantaRequest} from "../entity/SantaRequest";
 
 
 export class Handler {
@@ -19,6 +20,32 @@ export class Handler {
         const answer: string = `Привет, [id${user.id}|${user.first_name}]`;
 
         return answer;
+    }
+
+    public static async santaHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const [userInfo] = await bot.utils().api.users.get({
+            user_id: context.senderId
+        });
+
+        await context.send(
+            `Привет, [id${userInfo.id}|${userInfo.first_name}]. Рад, что ты захотел поучаствовать в тайном Санте! Заполни, пожалуйста, анкету`
+        );
+
+        const request: SantaRequest = new SantaRequest();
+
+        request.description = await context.question('Опиши себя и свои увлечения, чтобы твоему Санте было проще подобрать подарок').text;
+        request.address = await context.question('Напиши мне свой адрес').text;
+        request.vkUserId = userInfo.id;
+        request.isDelivered = false;
+
+        await request.save();
+
+        await context.send(
+            'Спасибо за регистрацию!'
+        );
+
+        return;
     }
 
 
@@ -96,25 +123,25 @@ export class Handler {
         ).toLowerCase() as statusType;
 
 
-        user.organ = [];
-
-        if (user.status.toLowerCase() === "пересажен") {
-
-            user.organ.push((await answerValidationLoop(
-                    RegisterValidator.organValidator,
-                    'Какой орган у вас пересажен?',
-                    RegisterKeyboard.organKeyboard())
-            ).toLowerCase() as organType);
-
-        } else if (user.status.toLowerCase() === "ожидает") {
-
-            user.organ.push((await answerValidationLoop(
-                    RegisterValidator.statusValidator,
-                    'Какой орган вы ожидаете?',
-                    RegisterKeyboard.organKeyboard())
-            ).toLowerCase() as organType);
-
-        }
+        // user.organ = [];
+        //
+        // if (user.status.toLowerCase() === "пересажен") {
+        //
+        //     user.organ.push((await answerValidationLoop(
+        //             RegisterValidator.organValidator,
+        //             'Какой орган у вас пересажен?',
+        //             RegisterKeyboard.organKeyboard())
+        //     ).toLowerCase() as organType);
+        //
+        // } else if (user.status.toLowerCase() === "ожидает") {
+        //
+        //     user.organ.push((await answerValidationLoop(
+        //             RegisterValidator.statusValidator,
+        //             'Какой орган вы ожидаете?',
+        //             RegisterKeyboard.organKeyboard())
+        //     ).toLowerCase() as organType);
+        //
+        // }
 
 
         user.instagram = await answerValidationLoop(RegisterValidator.instagramValidator, 'Введите ваш инстаграм');
@@ -122,9 +149,9 @@ export class Handler {
         const description: Answer = await context.question('Расскажите о себе');
         user.description = description.text
 
-        await context.send(
-            `${user.name}\n${user.lastName}\n${user.dateOfBirth.toDateString()}\n${user.dateOfOperation.toDateString()}\n${user.organ.toString()}\n${user.status}\n${user.instagram}\n${user.description}`
-        );
+        // await context.send(
+        //     `${user.name}\n${user.lastName}\n${user.dateOfBirth.toDateString()}\n${user.dateOfOperation.toDateString()}\n${user.organ.toString()}\n${user.status}\n${user.instagram}\n${user.description}`
+        // );
 
         return;
     }

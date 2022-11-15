@@ -23,8 +23,8 @@ export class User {
     @Column()
     private _dateOfOperation: Date;
 
-    @Column()
-    private _organ: organType[];
+    // @Column()
+    // private _organ: organType[];
 
     @Column()
     private _status: statusType;
@@ -46,7 +46,6 @@ export class User {
             this._dateOfOperation = userObject.dateOfOperation;
             this._description = userObject.description;
             this._instagram = userObject.instagram;
-            this._organ = userObject.organ;
             this._status = userObject.status;
         }
 
@@ -91,14 +90,6 @@ export class User {
 
     set dateOfOperation(value: Date) {
         this._dateOfOperation = value;
-    }
-
-    get organ(): organType[] {
-        return this._organ;
-    }
-
-    set organ(value: organType[]) {
-        this._organ = value;
     }
 
     get status(): statusType {

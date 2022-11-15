@@ -6,6 +6,7 @@ import {
     QuestionManager,
     IQuestionMessageContext, Answer
 } from 'vk-io-question';
+import {SantaRequest} from "../entity/SantaRequest";
 
 export class Bot {
 
@@ -21,7 +22,7 @@ export class Bot {
 
         const TOKEN: string = '08f3046ddd3820e0ab171f68c8044c775a7ef7ad1ef32ad335011f00ef99c2bb111805b2426c38e598e4b';
 
-        this.connection = await createConnection()
+        this.connection = await createConnection();
 
         this.api = new API({ token: TOKEN });
         this.upload = new Upload({api: this.api});
@@ -50,6 +51,9 @@ export class Bot {
             Handler.registerHandler(this, context)
         });
 
+        this.hearManager.hear('Санта', async (context) => {
+            Handler.santaHandler(this, context)
+        });
 
         this.updates.on(['chat_invite_user', 'chat_invite_user_by_link'], async (context): Promise<void> => {
 

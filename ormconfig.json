@@ -1,6 +1,11 @@
 {
-   "url": "mongodb+srv://yarik:yarik@cluster0.ns1bn.mongodb.net/main?retryWrites=true&w=majority",
-   "type": "mongodb",
+   "url1": "mongodb+srv://yarik:yarik@cluster0.ns1bn.mongodb.net/?retryWrites=true&w=majority",
+   "type": "postgres",
+   "host": "localhost",
+   "port": 5432,
+   "username": "postgres",
+   "password": "yarik",
+   "database": "santa_db",
    "synchronize": true,
    "logging": false,
    "entities": [
