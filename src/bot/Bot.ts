@@ -47,12 +47,40 @@ export class Bot {
             );
         })
 
-        this.hearManager.hear('Начать', async (context) => {
-            Handler.registerHandler(this, context)
-        });
+        // this.hearManager.hear('Начать', async (context) => {
+        //     Handler.registerHandler(this, context)
+        // });
 
         this.hearManager.hear('Санта', async (context) => {
-            Handler.santaHandler(this, context)
+            await Handler.santaHandler(this, context)
+        });
+
+        this.hearManager.hear('Регистрация', async (context) => {
+            await Handler.santaRegisterHandler(this, context)
+        });
+
+        this.hearManager.hear('Изменить анкету', async (context) => {
+            await Handler.santaRegisterHandler(this, context)
+        });
+
+        this.hearManager.hear('Моя анкета', async (context) => {
+            await Handler.santaMeHandler(this, context)
+        });
+
+        this.hearManager.hear('Рандом', async (context) => {
+            await Handler.santaRandomHandler(this, context)
+        });
+
+        this.hearManager.hear('Статус', async (context) => {
+            await Handler.santaStatusHandler(this, context)
+        });
+
+        this.hearManager.hear('Доставка', async (context) => {
+            await Handler.santaDeliveryHandler(this, context)
+        });
+
+        this.hearManager.hear('Получатель', async (context) => {
+            await Handler.santaReceiverHandler(this, context)
         });
 
         this.updates.on(['chat_invite_user', 'chat_invite_user_by_link'], async (context): Promise<void> => {

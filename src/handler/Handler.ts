@@ -7,6 +7,8 @@ import {organType, statusType} from "../type/Types";
 import {Parser} from "../pasrser/Parser";
 import {Answer} from "vk-io-question";
 import {SantaRequest} from "../entity/SantaRequest";
+import {SantaKeyboard} from "../keyboard/SantaKeyboard";
+import {DateUtils} from "typeorm/util/DateUtils";
 
 
 export class Handler {
@@ -28,14 +30,43 @@ export class Handler {
             user_id: context.senderId
         });
 
+        const santaRequest: SantaRequest = await SantaRequest.findOne({
+            where: {
+                _vkUserId: context.senderId
+            }
+        });
+
         await context.send(
-            `Привет, [id${userInfo.id}|${userInfo.first_name}]. Рад, что ты захотел поучаствовать в тайном Санте! Заполни, пожалуйста, анкету`
+            `Привет, [id${userInfo.id}|${userInfo.first_name}]. Рад, что ты захотел поучаствовать в тайном Санте!`,
+            {keyboard: SantaKeyboard.mainKeyboard(santaRequest != null)}
         );
+
+        return;
+    }
+
+    public static async santaRegisterHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const date: Date = new Date();
+        if (date.getDate() >= 5 && date.getMonth() != 11) {
+            await context.send(
+                'Регистрация доступна до 5 декабря :('
+            );
+            return;
+        }
+
+        const [userInfo] = await bot.utils().api.users.get({
+            user_id: context.senderId
+        });
 
         const request: SantaRequest = new SantaRequest();
 
-        request.description = await context.question('Опиши себя и свои увлечения, чтобы твоему Санте было проще подобрать подарок').text;
-        request.address = await context.question('Напиши мне свой адрес').text;
+        request.description = (
+            await context.question(
+                'Опиши себя и свои увлечения, чтобы твоему Санте было проще подобрать подарок, ' +
+                'а также наиболее удобный для тебя способ получения товара, если это принципиально'
+            )
+        ).text;
+        request.address = (await context.question('Напиши мне свой адрес, а также ближайшие пункты выдачи вб/озон')).text;
         request.vkUserId = userInfo.id;
         request.isDelivered = false;
 
@@ -44,6 +75,102 @@ export class Handler {
         await context.send(
             'Спасибо за регистрацию!'
         );
+
+        return;
+    }
+
+
+    public static async santaRandomHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const srList: SantaRequest[] = await SantaRequest.find();
+        const usersIdList: number[] = [];
+
+        for (let i = 0; i < srList.length; i++) {
+            usersIdList.push(srList[i].vkUserId);
+        }
+
+        for (let i = 0; i < srList.length; i++) {
+            const sr: SantaRequest = srList[i]
+            while (true) {
+                const index = Math.floor(Math.random() * usersIdList.length);
+                const id: number = usersIdList[index];
+                if (id != null && id != sr.vkUserId) {
+                    sr.santaId = id;
+                    usersIdList[index] = null
+                    break;
+                }
+            }
+            await sr.save();
+        }
+
+        return;
+    }
+
+    public static async santaStatusHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const santaRequest: SantaRequest = await SantaRequest.findOne({
+            where: {
+                _vkUserId: context.senderId
+            }
+        });
+
+        let msg: string = "";
+
+        if (santaRequest.isDelivered) {
+            msg += "Твой подарок доставлен! \n\n" + santaRequest.deliverInfo;
+        } else {
+            msg = "Твой подарок пока не доставлен :(";
+        }
+
+        context.send(msg);
+
+        return;
+    }
+
+    public static async santaReceiverHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const santaRequest: SantaRequest = await SantaRequest.findOne({
+            where: {
+                _santaId: context.senderId
+            }
+        });
+
+        await context.send(
+            `Адрес твоего получателя: ${santaRequest.address} \n\nПредпочтения твоего получателя: ${santaRequest.description}`
+        );
+
+        return;
+    }
+
+    public static async santaMeHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const santaRequest: SantaRequest = await SantaRequest.findOne({
+            where: {
+                _vkUserId: context.senderId
+            }
+        });
+
+        await context.send(
+            `Твой адрес: ${santaRequest.address} \n\nТвои предпочтения и рекомендации: ${santaRequest.description}`
+        );
+
+        return;
+    }
+
+
+    public static async santaDeliveryHandler (bot: Bot, context: MessageContext): Promise<string> {
+
+        const santaRequest: SantaRequest = await SantaRequest.findOne({
+            where: {
+                _santaId: context.senderId
+            }
+        });
+
+        santaRequest.deliverInfo = (await context.question('Напиши инструкцию, как получить твой подарок')).text;
+        santaRequest.isDelivered = true;
+        await santaRequest.save();
+
+        await context.send('Инструкция успешно сохранена. Если захочешь ее изменить, то напиши или нажми "Доставка" заново)');
 
         return;
     }

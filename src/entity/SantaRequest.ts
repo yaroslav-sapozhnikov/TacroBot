@@ -16,7 +16,7 @@ export class SantaRequest extends BaseEntity{
     private _description: string;
 
     @Column()
-    private _isDelivered: false;
+    private _isDelivered: boolean;
 
     @Column({nullable: true})
     private _deliverInfo: string;
@@ -54,11 +54,11 @@ export class SantaRequest extends BaseEntity{
         this._description = value;
     }
 
-    get isDelivered(): false {
+    get isDelivered(): boolean {
         return this._isDelivered;
     }
 
-    set isDelivered(value: false) {
+    set isDelivered(value: boolean) {
         this._isDelivered = value;
     }
 
